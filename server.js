@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import projectRoutes from './routes/projectRoutes.js';
+import serverless from 'serverless-http';
 
 dotenv.config();
 
@@ -25,8 +26,5 @@ app.use((err, req, res, next) => {
     res.status(500).json({message: "Internal Server Error"});
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.info(`🚀 Server running on ${process.env.VERCEL_URL || `http://localhost:${PORT}`}`);
-});
+// Export for serverless deployment
+export const handler = serverless(app);
