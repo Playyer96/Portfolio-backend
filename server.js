@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
+import {connectToDb} from './config/db.js';
 import projectRoutes from './routes/projectRoutes.js';
 
 dotenv.config();
@@ -16,14 +16,13 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
 const mongoUri = process.env.MONGODB_URI;
 if (!mongoUri) {
     console.error("MongoDB URI is missing from the environment variables.");
     process.exit(1);
 }
 
-connectDB()
+connectToDb()
     .then(() => console.log('MongoDB connected successfully'))
     .catch((error) => {
         console.error('Failed to connect to MongoDB:', error);
