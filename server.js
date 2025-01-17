@@ -32,8 +32,8 @@ connectToDb()
 app.use('/api/projects', projectRoutes);
 
 app.use((err, req, res, next) => {
-    console.error("Unhandled Error:", err.stack);
-    res.status(500).json({message: "Internal Server Error"});
+    console.error("Unhandled Error:", err);
+    res.status(500).json({message: "Server error", error: err.message});
 });
 
 export default app;
