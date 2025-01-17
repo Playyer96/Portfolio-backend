@@ -5,7 +5,7 @@ const dbName = process.env.DB_NAME;
 
 let client;
 
-async function connectToDb() {
+export async function connectToDb() {
     if (client) return client.db(dbName);
 
     try {
