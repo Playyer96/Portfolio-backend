@@ -1,42 +1,68 @@
-import { MongoClient } from 'mongodb';
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import {MongoClient} from 'mongodb';
+import projectRoutes from './routes/projectRoutes.js';
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
 let client;
 
-export async function connectToDb() {
+async function connectToDb() {
     if (client) return client.db(dbName);
 
-    if (!uri) {
-        throw new Error('MongoDB URI is not set');
-    }
-
-    let attempts = 0;
-    const maxAttempts = 5;
-    const delay = 3000; // 3 seconds
-
-    while (attempts < maxAttempts) {
-        try {
-            console.log(`Attempt ${attempts + 1}: Connecting to MongoDB...`);
-            client = new MongoClient(uri, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
-                serverSelectionTimeoutMS: 30000,
-            });
-
-            await client.connect();
-            console.log('MongoDB connected');
-            return client.db(dbName);
-        } catch (error) {
-            attempts++;
-            console.error(`MongoDB connection attempt ${attempts} failed: ${error.message}`);
-
-            if (attempts >= maxAttempts) {
-                throw new Error('MongoDB connection failed after several attempts');
-            }
-
-            await new Promise(resolve => setTimeout(resolve, delay));
-        }
+    try {
+        client = new MongoClient(uri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+        });
+        await client.connect();
+        console.log('Connected to MongoDB');
+        return client.db(dbName);
+    } catch (error) {
+        console.error('Failed to connect to MongoDB:', error);
+        throw new Error('MongoDB connection error');
     }
 }
+
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+    console.error('MongoDB URI is missing from the environment variables.');
+    process.exit(1);
+}
+
+connectToDb()
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch((error) => {
+        console.error('Failed to connect to MongoDB:', error);
+        process.exit(1);
+    });
+
+app.use('/api/projects', projectRoutes);
+
+app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'none');
+    next();
+});
+
+app.use((err, req, res, next) => {
+    console.error("Unhandled Error:", err.stack);
+    res.status(500).json({message: 'Internal Server Error'});
+});
+
+// Start the Express Server
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+
+export default app;
