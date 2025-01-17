@@ -1,37 +1,42 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import {connectToDb} from './config/db.js';
-import projectRoutes from './routes/projectRoutes.js';
+import { MongoClient } from 'mongodb';
 
-dotenv.config();
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.DB_NAME;
 
-const app = express();
+let client;
 
-app.use(cors());
-app.use(express.json());
+export async function connectToDb() {
+    if (client) return client.db(dbName);
 
-const mongoUri = process.env.MONGODB_URI;
-if (!mongoUri) {
-    console.error('MongoDB URI is missing from the environment variables.');
-    process.exit(1); // Exit the app if Mongo URI is not set
+    if (!uri) {
+        throw new Error('MongoDB URI is not set');
+    }
+
+    let attempts = 0;
+    const maxAttempts = 5;
+    const delay = 3000; // 3 seconds
+
+    while (attempts < maxAttempts) {
+        try {
+            console.log(`Attempt ${attempts + 1}: Connecting to MongoDB...`);
+            client = new MongoClient(uri, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 30000,
+            });
+
+            await client.connect();
+            console.log('MongoDB connected');
+            return client.db(dbName);
+        } catch (error) {
+            attempts++;
+            console.error(`MongoDB connection attempt ${attempts} failed: ${error.message}`);
+
+            if (attempts >= maxAttempts) {
+                throw new Error('MongoDB connection failed after several attempts');
+            }
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
 }
-
-// Ensure DB connection on startup
-connectToDb()
-    .then(() => console.log('MongoDB connected successfully'))
-    .catch((error) => {
-        console.error('Failed to connect to MongoDB:', error);
-        process.exit(1); // Exit the app if connection fails
-    });
-
-// Routes setup
-app.use('/api/projects', projectRoutes);
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Unhandled Error:', err.stack);
-    res.status(500).json({message: 'Internal Server Error'});
-});
-
-export default app;
