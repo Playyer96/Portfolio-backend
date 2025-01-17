@@ -28,5 +28,5 @@ app.use((err, req, res, next) => {
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.info(`🚀 Server running on http://localhost:${PORT}`);
+    console.info(`🚀 Server running on ${process.env.VERCEL_URL || `http://localhost:${PORT}`}`);
 });
