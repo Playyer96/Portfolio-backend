@@ -3,28 +3,34 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import projectRoutes from './routes/projectRoutes.js';
-import serverless from 'serverless-http';
 
 dotenv.config();
 
-// Initialize Express
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-connectDB();
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+    console.error("MongoDB URI is missing from the environment variables.");
+    process.exit(1);
+}
+
+connectDB(mongoUri)
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch((error) => {
+        console.error('Failed to connect to MongoDB:', error);
+        process.exit(1);
+    });
 
 // Routes
 app.use('/api/projects', projectRoutes);
 
-// Global Error Handler
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err.stack);
     res.status(500).json({message: "Internal Server Error"});
 });
 
-// Export for serverless deployment
-export const handler = serverless(app);
+export default app;
