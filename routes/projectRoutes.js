@@ -1,19 +1,18 @@
 import express from 'express';
-import mongoose from 'mongoose';
+import connectToDb from '../config/db.js'; // Default import now
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+// Route to fetch projects
+router.get('/projects', async (req, res) => {
     try {
-        const dbName = process.env.MONGO_DB_NAME || "Project"; // Default to "Project"
-        const db = mongoose.connection.useDb(dbName);
-        const projectsCollection = db.collection("projects");
-
+        const db = await connectToDb();  // Get database instance
+        const projectsCollection = db.collection('projects');
         const projects = await projectsCollection.find().toArray();
-        res.status(200).json(projects);
-    } catch (err) {
-        console.error("Database Error:", err);
-        res.status(500).json({message: "Server error", error: err.message});
+        res.json(projects);
+    } catch (error) {
+        console.error('Error fetching projects', error);
+        res.status(500).send('Server error');
     }
 });
 
