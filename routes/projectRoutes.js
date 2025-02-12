@@ -1,10 +1,10 @@
 import express from 'express';
-import connectToDb from '../config/db.js'; // Default import now
+import { connectToDb } from '../config/db.js';
 
 const router = express.Router();
 
 // Route to fetch projects
-router.get('/projects', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const db = await connectToDb();  // Get database instance
         const projectsCollection = db.collection('projects');

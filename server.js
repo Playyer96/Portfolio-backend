@@ -3,6 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import {connectToDb} from './config/db.js';
 import projectRoutes from './routes/projectRoutes.js';
+import aboutRoutes from './routes/aboutRoutes.js';
+import experienceRoutes from './routes/experienceRoutes.js';
+import technologiesRoutes from './routes/technologiesRoutes.js';
 
 dotenv.config();
 
@@ -30,10 +33,18 @@ connectToDb()
     });
 
 app.use('/api/projects', projectRoutes);
+app.use('/api/about', aboutRoutes);
+app.use('/api/experience', experienceRoutes);
+app.use('/api/technologies', technologiesRoutes);
 
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err);
     res.status(500).json({message: "Server error", error: err.message});
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
 export default app;
