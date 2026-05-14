@@ -1,12 +1,22 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import {connectToDb} from './config/db.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { connectToDb } from './config/db.js';
 import projectRoutes from './routes/projectRoutes.js';
 import aboutRoutes from './routes/aboutRoutes.js';
 import experienceRoutes from './routes/experienceRoutes.js';
 import technologiesRoutes from './routes/technologiesRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
+import pluginRoutes from './routes/pluginRoutes.js';
+import appRoutes from './routes/appRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import techStackRoutes from './routes/techStackRoutes.js';
+import skillRoutes from './routes/skillRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config();
 
 const app = express();
@@ -17,7 +27,8 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
 const mongoUri = process.env.MONGODB_URI;
 if (!mongoUri) {
@@ -36,10 +47,17 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/about', aboutRoutes);
 app.use('/api/experience', experienceRoutes);
 app.use('/api/technologies', technologiesRoutes);
+app.use('/api/blog', blogRoutes);
+app.use('/api/plugins', pluginRoutes);
+app.use('/api/apps', appRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/tech-stack', techStackRoutes);
+app.use('/api/skills', skillRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err);
-    res.status(500).json({message: "Server error", error: err.message});
+    res.status(500).json({ message: "Server error", error: err.message });
 });
 
 const PORT = process.env.PORT || 3000;

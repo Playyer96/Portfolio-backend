@@ -20,7 +20,6 @@ export async function connectToDb() {
     if (client) return client.db(dbName);
 
     try {
-        console.log('Attempting to connect with URI:', uri);
         client = new MongoClient(uri);
         await client.connect();
         console.log('Connected to MongoDB successfully');
