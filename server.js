@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -19,16 +21,45 @@ import categoryRoutes from './routes/categoryRoutes.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET environment variable is not set.');
+    process.exit(1);
+}
+
 const app = express();
+
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 app.use((req, res, next) => {
     res.setHeader('Permissions-Policy', 'accelerometer=(), ambient-light-sensor=(), autoplay=(), camera=(), encrypted-media=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), speaker=(), usb=(), vr=()');
     next();
 });
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use('/uploads', express.static(join(__dirname, 'uploads')));
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3001').split(',').map(o => o.trim());
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+}));
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests, please try again later.' },
+});
+
+app.use(express.json({ limit: '2mb' }));
+app.use('/uploads', express.static(join(__dirname, 'uploads'), {
+    setHeaders: (res) => {
+        res.setHeader('Content-Disposition', 'attachment');
+    },
+}));
 
 const mongoUri = process.env.MONGODB_URI;
 if (!mongoUri) {
@@ -50,14 +81,14 @@ app.use('/api/technologies', technologiesRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/apps', appRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tech-stack', techStackRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/categories', categoryRoutes);
 
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: "Server error" });
 });
 
 const PORT = process.env.PORT || 3000;

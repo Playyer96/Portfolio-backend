@@ -47,7 +47,7 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', requireAuth, async (req, res) => {
   try {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {

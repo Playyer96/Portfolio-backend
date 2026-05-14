@@ -3,13 +3,21 @@ import { ObjectId } from 'mongodb';
 import { connectToDb } from '../config/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { upload, getUploadUrl } from '../middleware/upload.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
     const db = await connectToDb();
-    const published = req.query.published === 'false' ? {} : { published: true };
+    let isAdmin = false;
+    if (req.query.published === 'false') {
+      const header = req.headers.authorization;
+      if (header?.startsWith('Bearer ')) {
+        try { jwt.verify(header.split(' ')[1], process.env.JWT_SECRET); isAdmin = true; } catch {}
+      }
+    }
+    const published = isAdmin ? {} : { published: true };
     const posts = await db.collection('blog').find(published)
       .sort({ publishDate: -1 })
       .toArray();

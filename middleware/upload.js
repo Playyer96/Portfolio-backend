@@ -18,11 +18,11 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i;
+  const allowed = /\.(jpg|jpeg|png|gif|webp|avif)$/i;
   if (allowed.test(path.extname(file.originalname))) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files (jpg, jpeg, png, gif, webp, svg, avif) are allowed'), false);
+    cb(new Error('Only image files (jpg, jpeg, png, gif, webp, avif) are allowed'), false);
   }
 };
 
