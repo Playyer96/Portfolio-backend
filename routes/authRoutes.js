@@ -1,5 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import { Resend } from 'resend';
 import { connectToDb } from '../config/db.js';
 import { generateToken, requireAuth } from '../middleware/auth.js';
 
@@ -69,6 +71,87 @@ router.post('/register', requireAuth, async (req, res) => {
     res.status(201).json({ token, user: { email, username, role: 'admin' } });
   } catch (error) {
     console.error('Register error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  // Always return the same response to not reveal whether an email exists
+  const GENERIC_OK = { message: 'If that email is registered, a reset link has been sent.' };
+
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email required' });
+
+    const db = await connectToDb();
+    const user = await db.collection('users').findOne({ email });
+    if (!user) return res.json(GENERIC_OK);
+
+    const plainToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(plainToken).digest('hex');
+    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await db.collection('users').updateOne(
+      { email },
+      { $set: { resetTokenHash: tokenHash, resetTokenExpiry: expiry } }
+    );
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const resetLink = `${frontendUrl}/reset-password?token=${plainToken}`;
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'noreply@danilovanegas.xyz',
+      to: email,
+      subject: 'Reset your portfolio dashboard password',
+      html: `
+        <p>You requested a password reset for your portfolio dashboard.</p>
+        <p><a href="${resetLink}">Click here to reset your password</a></p>
+        <p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>
+        <p style="color:#999;font-size:12px">${resetLink}</p>
+      `,
+    });
+
+    res.json(GENERIC_OK);
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Token and new password required' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const db = await connectToDb();
+    const user = await db.collection('users').findOne({
+      resetTokenHash: tokenHash,
+      resetTokenExpiry: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset link' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.collection('users').updateOne(
+      { _id: user._id },
+      {
+        $set: { passwordHash },
+        $unset: { resetTokenHash: '', resetTokenExpiry: '' },
+      }
+    );
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
