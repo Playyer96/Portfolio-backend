@@ -85,6 +85,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const db = await connectToDb();
     const user = await db.collection('users').findOne({ email });
+    console.log('[forgot-password] user found:', !!user);
     if (!user) return res.json(GENERIC_OK);
 
     const plainToken = crypto.randomBytes(32).toString('hex');
@@ -100,8 +101,10 @@ router.post('/forgot-password', async (req, res) => {
     const resetLink = `${frontendUrl}/reset-password?token=${plainToken}`;
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'noreply@danilovanegas.xyz',
+    const from = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+    console.log('[forgot-password] sending from:', from, 'to:', email);
+    const result = await resend.emails.send({
+      from,
       to: email,
       subject: 'Reset your portfolio dashboard password',
       html: `
@@ -111,6 +114,7 @@ router.post('/forgot-password', async (req, res) => {
         <p style="color:#999;font-size:12px">${resetLink}</p>
       `,
     });
+    console.log('[forgot-password] resend result:', JSON.stringify(result));
 
     res.json(GENERIC_OK);
   } catch (error) {
