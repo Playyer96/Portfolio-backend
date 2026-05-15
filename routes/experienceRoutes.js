@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
     try {
-        const { title, subtitle, date, icon, iconBackground, responsibilities } = req.body;
+        const { title, subtitle, date, icon, iconBackground, responsibilities, technologies } = req.body;
         if (!title) return res.status(400).json({ message: 'Title required' });
 
         const db = await connectToDb();
@@ -26,6 +26,7 @@ router.post('/', requireAuth, async (req, res) => {
             title, subtitle: subtitle || '', date: date || '', icon: icon || 'WorkIcon',
             iconBackground: iconBackground || '#f9004d',
             responsibilities: responsibilities || [],
+            technologies: technologies || [],
         };
 
         await db.collection('experience').updateOne(
@@ -44,7 +45,7 @@ router.put('/:index', requireAuth, async (req, res) => {
         const index = parseInt(req.params.index);
         if (isNaN(index)) return res.status(400).json({ message: 'Invalid index' });
 
-        const { title, subtitle, date, icon, iconBackground, responsibilities } = req.body;
+        const { title, subtitle, date, icon, iconBackground, responsibilities, technologies } = req.body;
         const db = await connectToDb();
         const field = `experience.${index}`;
 
@@ -55,6 +56,7 @@ router.put('/:index', requireAuth, async (req, res) => {
         if (icon !== undefined) setFields[`${field}.icon`] = icon;
         if (iconBackground !== undefined) setFields[`${field}.iconBackground`] = iconBackground;
         if (responsibilities !== undefined) setFields[`${field}.responsibilities`] = responsibilities;
+        if (technologies !== undefined) setFields[`${field}.technologies`] = technologies;
 
         const result = await db.collection('experience').updateOne({}, { $set: setFields });
         if (result.matchedCount === 0) return res.status(404).json({ message: 'Experience wrapper not found' });
