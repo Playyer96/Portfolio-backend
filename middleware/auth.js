@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { JWT_EXPIRY } from '../config/constants.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -19,5 +20,5 @@ export function requireAuth(req, res, next) {
 }
 
 export function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 }

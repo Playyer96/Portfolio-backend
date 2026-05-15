@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { Resend } from 'resend';
 import { connectToDb } from '../config/db.js';
 import { generateToken, requireAuth } from '../middleware/auth.js';
+import { BCRYPT_ROUNDS, PASSWORD_MIN_LENGTH, RESET_TOKEN_EXPIRY_MS } from '../config/constants.js';
 
 const router = express.Router();
 
@@ -62,7 +63,7 @@ router.post('/register', requireAuth, async (req, res) => {
       return res.status(409).json({ message: 'User already exists' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await db.collection('users').insertOne({
       username, email, passwordHash, role: 'admin', createdAt: new Date(),
     });
@@ -90,7 +91,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const plainToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(plainToken).digest('hex');
-    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
 
     await db.collection('users').updateOne(
       { email },
@@ -129,8 +130,8 @@ router.post('/reset-password', async (req, res) => {
     if (!token || !password) {
       return res.status(400).json({ message: 'Token and new password required' });
     }
-    if (password.length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      return res.status(400).json({ message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters` });
     }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
@@ -144,7 +145,7 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired reset link' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     await db.collection('users').updateOne(
       { _id: user._id },
       {
