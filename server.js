@@ -17,6 +17,7 @@ import authRoutes from './routes/authRoutes.js';
 import techStackRoutes from './routes/techStackRoutes.js';
 import skillRoutes from './routes/skillRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import homelabRoutes from './routes/homelabRoutes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config();
@@ -87,6 +88,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tech-stack', techStackRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/homelab', homelabRoutes);
 
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err);

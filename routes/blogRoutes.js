@@ -1,11 +1,71 @@
 import express from 'express';
 import { ObjectId } from 'mongodb';
+import Parser from 'rss-parser';
 import { connectToDb } from '../config/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { upload, getUploadUrl } from '../middleware/upload.js';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
+const rssParser = new Parser({ customFields: { item: ['content:encoded', 'media:thumbnail'] } });
+
+// Simple in-memory cache for Medium RSS (30-min TTL)
+let mediumCache = { data: null, ts: 0 };
+const MEDIUM_TTL = 30 * 60 * 1000;
+
+function estimateReadTime(html = '') {
+  const words = html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
+function extractThumbnail(item) {
+  const encoded = item['content:encoded'] || '';
+  const match = encoded.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match?.[1] || item['media:thumbnail']?.$.url || null;
+}
+
+function stripHtml(html = '') {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// GET /api/blog/medium — proxies Medium RSS and returns clean article list
+router.get('/medium', async (req, res) => {
+  try {
+    if (mediumCache.data && Date.now() - mediumCache.ts < MEDIUM_TTL) {
+      return res.json(mediumCache.data);
+    }
+
+    // Resolve Medium username: env var or from about doc
+    let username = process.env.MEDIUM_USERNAME || '';
+    if (!username) {
+      const db = await connectToDb();
+      const about = await db.collection('about').findOne({});
+      const medium = about?.socials?.find(s => s.name?.toLowerCase() === 'medium');
+      username = medium?.handle?.replace('@', '') || '';
+    }
+
+    if (!username) return res.json([]);
+
+    const feed = await rssParser.parseURL(`https://medium.com/feed/@${username}`);
+    const articles = (feed.items || []).map(item => ({
+      id:          item.guid || item.link,
+      title:       item.title || '',
+      link:        item.link  || '',
+      pubDate:     item.pubDate || item.isoDate || null,
+      tags:        item.categories || [],
+      thumbnail:   extractThumbnail(item),
+      excerpt:     stripHtml(item['content:encoded'] || item.contentSnippet || '').slice(0, 240),
+      readTime:    estimateReadTime(item['content:encoded'] || ''),
+      source:      'medium',
+    }));
+
+    mediumCache = { data: articles, ts: Date.now() };
+    res.json(articles);
+  } catch (err) {
+    console.error('Medium RSS error:', err.message);
+    res.json([]);
+  }
+});
 
 router.get('/', async (req, res) => {
   try {

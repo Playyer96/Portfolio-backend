@@ -4,6 +4,48 @@ import { connectToDb } from '../config/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { upload, getUploadUrl } from '../middleware/upload.js';
 
+// ── Store sync helpers ────────────────────────────────────────────────────────
+
+async function fetchAppStore(url) {
+  const match = /\/id(\d+)/.exec(url);
+  if (!match) return null;
+  const id = match[1];
+  const r = await fetch(`https://itunes.apple.com/lookup?id=${id}&entity=software`);
+  if (!r.ok) return null;
+  const data = await r.json();
+  const result = data.results?.[0];
+  if (!result) return null;
+  return {
+    icon:         result.artworkUrl512 || result.artworkUrl100 || null,
+    images:       (result.screenshotUrls || []).map(u => ({ url: u, alt: result.trackName, type: 'screenshot' })),
+    rating:       parseFloat((result.averageUserRating || 0).toFixed(1)),
+    ratingCount:  result.userRatingCount || 0,
+    installs:     null,
+    description:  result.description || null,
+    version:      result.version || null,
+  };
+}
+
+async function fetchGooglePlay(url) {
+  const id = new URL(url).searchParams.get('id');
+  if (!id) return null;
+  try {
+    const gplay = await import('google-play-scraper');
+    const app = await gplay.default.app({ appId: id, lang: 'en', country: 'us' });
+    return {
+      icon:        app.icon || null,
+      images:      (app.screenshots || []).map(u => ({ url: u, alt: app.title, type: 'screenshot' })),
+      rating:      parseFloat((app.score || 0).toFixed(1)),
+      ratingCount: app.ratings || 0,
+      installs:    app.installs || null,
+      description: app.description || null,
+      version:     app.version || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -17,6 +59,38 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching apps:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /api/apps/:id/sync  — fetch live data from app stores and update the DB
+router.post('/:id/sync', requireAuth, async (req, res) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid ID' });
+    const db    = await connectToDb();
+    const app   = await db.collection('apps').findOne({ _id: new ObjectId(req.params.id) });
+    if (!app) return res.status(404).json({ message: 'App not found' });
+
+    let storeData = null;
+    if (app.googlePlayUrl) storeData = await fetchGooglePlay(app.googlePlayUrl);
+    if (!storeData && app.appStoreUrl) storeData = await fetchAppStore(app.appStoreUrl);
+
+    if (!storeData) return res.status(422).json({ message: 'Could not fetch store data — check the store URL' });
+
+    const update = { updatedAt: new Date(), lastSynced: new Date() };
+    if (storeData.icon)        update.icon        = storeData.icon;
+    if (storeData.images?.length) update.images   = storeData.images;
+    if (storeData.rating)      update.rating      = storeData.rating;
+    if (storeData.ratingCount) update.ratingCount = storeData.ratingCount;
+    if (storeData.installs)    update.installs    = storeData.installs;
+    if (storeData.description && !app.description) update.description = storeData.description;
+    if (storeData.version)     update.version     = storeData.version;
+
+    await db.collection('apps').updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
+    const updated = await db.collection('apps').findOne({ _id: new ObjectId(req.params.id) });
+    res.json({ message: 'Synced', app: updated });
+  } catch (err) {
+    console.error('App sync error:', err);
+    res.status(500).json({ message: 'Server error', detail: err.message });
   }
 });
 
