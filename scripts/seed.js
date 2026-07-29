@@ -534,7 +534,7 @@ const appsData = [
         name: 'WisprTasks',
         slug: 'wisprtasks',
         description: 'A focused task app that makes capturing and acting on priorities feel less overwhelming.',
-        platform: 'web',
+        platform: 'ios',
         appStoreUrl: null,
         googlePlayUrl: null,
         images: [],

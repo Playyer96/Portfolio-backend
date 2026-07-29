@@ -30,7 +30,7 @@ const projects = [
   },
 ];
 
-const app = { name: 'WisprTasks', slug: 'wisprtasks', description: 'A focused task app that makes capturing and acting on priorities feel less overwhelming.', platform: 'web', appStoreUrl: null, googlePlayUrl: null, images: [], icon: null, downloads: 0, rating: 0, featured: true, updatedAt: new Date() };
+const app = { name: 'WisprTasks', slug: 'wisprtasks', description: 'A focused task app that makes capturing and acting on priorities feel less overwhelming.', platform: 'ios', appStoreUrl: null, googlePlayUrl: null, images: [], icon: null, downloads: 0, rating: 0, featured: true, updatedAt: new Date() };
 
 const client = new MongoClient(uri);
 try {
