@@ -482,11 +482,7 @@ const pluginsData = [
         storeType: 'unity',
         unityStoreUrl: null,
         unrealStoreUrl: null,
-        images: [
-            { url: 'https://wisprtasks.xyz/shots/onboarding.png', alt: 'WisprTasks onboarding', type: 'screenshot' },
-            { url: 'https://wisprtasks.xyz/shots/capture.png', alt: 'WisprTasks capture screen', type: 'screenshot' },
-            { url: 'https://wisprtasks.xyz/shots/plan.png', alt: 'WisprTasks planning screen', type: 'screenshot' },
-        ],
+        images: [],
         icon: null,
         price: 'Free',
         version: '1.0.0',
