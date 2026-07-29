@@ -545,7 +545,11 @@ const appsData = [
         platform: 'ios',
         appStoreUrl: null,
         googlePlayUrl: null,
-        images: [],
+        images: [
+            { url: 'https://wisprtasks.xyz/shots/onboarding.png', alt: 'WisprTasks onboarding', type: 'screenshot' },
+            { url: 'https://wisprtasks.xyz/shots/capture.png', alt: 'WisprTasks capture screen', type: 'screenshot' },
+            { url: 'https://wisprtasks.xyz/shots/plan.png', alt: 'WisprTasks planning screen', type: 'screenshot' },
+        ],
         icon: null,
         downloads: 0,
         rating: 0,
