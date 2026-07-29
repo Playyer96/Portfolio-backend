@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { name, year, role, descriptions, technologies, responsibilities, images, link, githubLink, liveLink, videoUrl, featured } = req.body;
+    const { name, year, role, descriptions, technologies, responsibilities, images, link, githubLink, liveLink, videoUrl, featured, visual, challenge, solution } = req.body;
     if (!name) return res.status(400).json({ message: 'Name required' });
 
     const db = await connectToDb();
@@ -30,6 +30,7 @@ router.post('/', requireAuth, async (req, res) => {
       id: maxId + 1, name, year: year || new Date().getFullYear(), role: role || '',
       descriptions: descriptions || [], technologies: technologies || [],
       responsibilities: responsibilities || [], images: images || [],
+      visual: visual || '', challenge: challenge || '', solution: solution || '',
       link: link || null, githubLink: githubLink || null, liveLink: liveLink || null,
       videoUrl: videoUrl || null, featured: featured === true,
     };
@@ -50,7 +51,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: 'Invalid ID' });
 
-    const { name, year, role, descriptions, technologies, responsibilities, images, link, githubLink, liveLink, videoUrl, featured } = req.body;
+    const { name, year, role, descriptions, technologies, responsibilities, images, link, githubLink, liveLink, videoUrl, featured, visual, challenge, solution } = req.body;
     const db = await connectToDb();
 
     const setFields = {};
@@ -66,6 +67,9 @@ router.put('/:id', requireAuth, async (req, res) => {
     if (liveLink !== undefined) setFields['projects.$[elem].liveLink'] = liveLink;
     if (videoUrl !== undefined) setFields['projects.$[elem].videoUrl'] = videoUrl;
     if (featured !== undefined) setFields['projects.$[elem].featured'] = featured === true;
+    if (visual !== undefined) setFields['projects.$[elem].visual'] = visual;
+    if (challenge !== undefined) setFields['projects.$[elem].challenge'] = challenge;
+    if (solution !== undefined) setFields['projects.$[elem].solution'] = solution;
 
     if (Object.keys(setFields).length === 0) {
       return res.status(400).json({ message: 'No fields to update' });
