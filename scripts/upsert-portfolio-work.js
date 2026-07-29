@@ -36,10 +36,8 @@ const client = new MongoClient(uri);
 try {
   await client.connect();
   const db = client.db(dbName);
-  for (const project of projects) {
-    await db.collection('projects').updateOne({}, { $pull: { projects: { id: project.id } } });
-    await db.collection('projects').updateOne({}, { $push: { projects: project } });
-  }
+  await db.collection('projects').updateOne({}, { $pull: { projects: { id: { $in: projects.map(project => project.id) } } } });
+  await db.collection('projects').updateOne({}, { $push: { projects: { $each: projects.slice().reverse(), $position: 0 } } });
   await db.collection('apps').updateOne({ slug: app.slug }, { $set: app, $setOnInsert: { createdAt: new Date() } }, { upsert: true });
   console.log('Upserted 2 projects and 1 app.');
 } finally {
