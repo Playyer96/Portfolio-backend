@@ -17,7 +17,7 @@ const projects = [
     responsibilities: ['Translated services into plain-language pages and clear calls to action', 'Built the inquiry flow and Resend transactional email delivery', 'Created reusable confirmation and internal-notification email templates'],
     challenge: 'Making a technical service feel approachable while ensuring every inquiry receives a dependable, branded follow-up.',
     solution: 'Paired a simple inquiry path with purpose-built Resend templates for visitor confirmations and team notifications.',
-    images: [], link: null, githubLink: null, liveLink: null, videoUrl: null,
+    images: [], livePreview: 'https://offtheshelfstudio.xyz/', link: 'https://offtheshelfstudio.xyz/', githubLink: null, liveLink: null, videoUrl: null,
   },
   {
     id: 8, name: 'WisprTasks', year: 2026, role: 'Product & app developer', visual: 'tasks', featured: true,
@@ -26,7 +26,7 @@ const projects = [
     responsibilities: ['Designed quick capture, prioritization, and next-action workflows', 'Built the application interface and cross-device data flows', 'Used Resend templates for account and task-related communication'],
     challenge: 'Most task tools expose too much structure before a person has decided what to do next.',
     solution: 'Reduced visible choices, kept the current priority prominent, and reserved automation for real follow-up work.',
-    images: [], link: null, githubLink: null, liveLink: null, videoUrl: null,
+    images: ['https://wisprtasks.xyz/shots/onboarding.png', 'https://wisprtasks.xyz/shots/capture.png', 'https://wisprtasks.xyz/shots/plan.png'], link: 'https://wisprtasks.xyz/', githubLink: null, liveLink: null, videoUrl: null,
   },
 ];
 

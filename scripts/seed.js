@@ -83,7 +83,7 @@ const projectsData = {
             visual: 'studio',
             challenge: 'Making a technical service feel approachable while ensuring every inquiry receives a dependable, branded follow-up.',
             solution: 'Paired a simple inquiry path with purpose-built Resend templates for visitor confirmations and team notifications.',
-            images: [], link: null, videoUrl: null, featured: true, githubLink: null, liveLink: null,
+            images: [], livePreview: 'https://offtheshelfstudio.xyz/', link: 'https://offtheshelfstudio.xyz/', videoUrl: null, featured: true, githubLink: null, liveLink: null,
         },
         {
             id:   2,
@@ -106,7 +106,11 @@ const projectsData = {
             visual: 'tasks',
             challenge: 'Most task tools expose too much structure before a person has decided what to do next.',
             solution: 'Reduced visible choices, kept the current priority prominent, and reserved automation for real follow-up work.',
-            images: [], link: null, videoUrl: null, featured: true, githubLink: null, liveLink: null,
+            images: [
+                { image: 'https://wisprtasks.xyz/shots/onboarding.png' },
+                { image: 'https://wisprtasks.xyz/shots/capture.png' },
+                { image: 'https://wisprtasks.xyz/shots/plan.png' },
+            ], link: 'https://wisprtasks.xyz/', videoUrl: null, featured: true, githubLink: null, liveLink: null,
         },
         {
             id:   3,
