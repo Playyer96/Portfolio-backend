@@ -50,10 +50,10 @@ const aboutData = {
         { name: 'Instagram', handle: '_dani.svs',  url: 'https://instagram.com/_dani.svs' },
     ],
     cv: {
-        path:  '/CV-Danilo-Vanegas-2025.pdf',
-        year:  '2025',
+        path:  '/cv',
+        year:  '2026',
         pages: '1',
-        size:  '240 KB',
+        size:  null,
     },
     marqueeItems: ['React', 'TypeScript', 'Three.js', 'WebGL', 'Node.js', 'Game Dev', 'Creative Coding', 'UI/UX'],
 };
